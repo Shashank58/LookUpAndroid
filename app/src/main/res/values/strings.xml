@@ -1,0 +1,8 @@
+<resources>
+    <string name="app_name">LookUp</string>
+    <string name="facebook_app_id">1633049006955053</string>
+    <string name="title_activity_map">Map</string>
+    <string name="menu_share">Settings</string>
+    <string name="radius">Set Radius</string>
+    <string name="button">Set</string>
+</resources>
