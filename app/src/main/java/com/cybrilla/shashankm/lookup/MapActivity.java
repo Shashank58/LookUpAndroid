@@ -1,22 +1,33 @@
 package com.cybrilla.shashankm.lookup;
 
+import android.app.ProgressDialog;
 import android.content.Intent;
 import android.graphics.Color;
+import android.location.Location;
 import android.os.Bundle;
 import android.support.v4.content.ContextCompat;
 import android.support.v7.app.AppCompatActivity;
+import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
 import android.widget.EditText;
+import android.widget.Toast;
 
-import com.google.android.gms.common.api.GoogleApiClient;
+import com.android.volley.Response;
+import com.android.volley.toolbox.JsonObjectRequest;
+import com.google.android.gms.maps.CameraUpdateFactory;
 import com.google.android.gms.maps.GoogleMap;
 import com.google.android.gms.maps.OnMapReadyCallback;
 import com.google.android.gms.maps.SupportMapFragment;
 import com.google.android.gms.maps.model.Circle;
 import com.google.android.gms.maps.model.CircleOptions;
 import com.google.android.gms.maps.model.LatLng;
+import com.google.android.gms.maps.model.MarkerOptions;
+
+import org.json.JSONArray;
+import org.json.JSONObject;
+
 
 public class MapActivity extends AppCompatActivity implements OnMapReadyCallback {
 
@@ -24,8 +35,9 @@ public class MapActivity extends AppCompatActivity implements OnMapReadyCallback
     private EditText radius;
     private LatLng loc;
     private Circle c;
-    private GoogleApiClient mGoogleApiClient;
-    private static final int PLACE_PICKER_REQUEST = 1;
+    private static String TAG = MapActivity.class.getSimpleName();
+    private String jsonResponse;
+    private ProgressDialog pDialog;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -36,6 +48,9 @@ public class MapActivity extends AppCompatActivity implements OnMapReadyCallback
                 .findFragmentById(R.id.map);
         mapFragment.getMapAsync(this);
         // Getting Google Play availability status
+        pDialog = new ProgressDialog(this);
+        pDialog.setMessage("Please wait...");
+        pDialog.setCancelable(false);
     }
 
     private void replaceMapFragment() {
@@ -62,11 +77,11 @@ public class MapActivity extends AppCompatActivity implements OnMapReadyCallback
     private GoogleMap.OnMyLocationChangeListener myLocationChangeListener() {
         return new GoogleMap.OnMyLocationChangeListener() {
             @Override
-            public void onMyLocationChange(android.location.Location location) {
+            public void onMyLocationChange(Location location) {
                 loc = new LatLng(location.getLatitude(), location.getLongitude());
 
-                map.addMarker(new com.google.android.gms.maps.model.MarkerOptions().position(loc));
-                map.animateCamera(com.google.android.gms.maps.CameraUpdateFactory.newLatLngZoom(loc, 16.0f));
+                map.addMarker(new MarkerOptions().position(loc));
+                map.animateCamera(CameraUpdateFactory.newLatLngZoom(loc, 16.0f));
             }
         };
     }
@@ -77,21 +92,81 @@ public class MapActivity extends AppCompatActivity implements OnMapReadyCallback
         }
         radius = (EditText) findViewById(R.id.radius);
         double circleRadius = Double.parseDouble(radius.getText().toString());
-         c = map.addCircle(new CircleOptions().center(loc).radius(circleRadius)
+        c = map.addCircle(new CircleOptions().center(loc).radius(circleRadius)
                 .fillColor(Color.LTGRAY).strokeColor(Color.BLUE).strokeWidth(5));
-       /* try {
-            com.google.android.gms.location.places.ui.PlacePicker.IntentBuilder intentBuilder =
-                    new com.google.android.gms.location.places.ui.PlacePicker.IntentBuilder();
-            intentBuilder.setLatLngBounds(loc);
-            Intent intent = intentBuilder.build(getApplicationContext());
-            startActivityForResult(intent, PLACE_PICKER_REQUEST);
-        }
-        catch (GooglePlayServicesRepairableException e) {
-            e.printStackTrace();
-        } catch (GooglePlayServicesNotAvailableException e) {
-            e.printStackTrace();
-        }*/
+        getRequest(circleRadius);
+
     }
+
+    public void getRequest(double circleRadius) {
+        String requestUrl = "https://maps.googleapis.com/maps/api/place/nearbysearch/json?location=" + loc.toString() + "&radius=" + circleRadius + "&types=food&name=cruise&key=AIzaSyBK_IGgveKbdNOnjATETCQhnmJfnfRgzQ0";
+       // showpDialog();
+        JsonObjectRequest jsonObjReq = new JsonObjectRequest(requestUrl, null,
+                new Response.Listener<JSONObject>() {
+
+            @Override
+            public void onResponse(JSONObject response) {
+                Log.e(TAG, response.toString());
+
+                try {
+
+                    JSONArray results = response.getJSONArray("results");
+                    for(int i= 0;i < results.length(); i++){
+                        JSONObject result = (JSONObject) results.get(i);
+                        JSONObject geometry = result.getJSONObject("geometry");
+                        JSONObject location = geometry.getJSONObject("location");
+                        double latitude = location.getDouble("lat");
+                        double longitude = location.getDouble("lng");
+                        LatLng place = new LatLng(latitude, longitude);
+                        map.addMarker(new MarkerOptions().position(place));
+                    }
+                    // Parsing json object response
+                    // response will be a json object
+//                    String name = response.getString("name");
+//                    String email = response.getString("email");
+//                    JSONObject phone = response.getJSONObject("phone");
+//                    String home = phone.getString("home");
+//                    String mobile = phone.getString("mobile");
+//
+//                    jsonResponse = "";
+//                    jsonResponse += "Name: " + name + "\n\n";
+//                    jsonResponse += "Email: " + email + "\n\n";
+//                    jsonResponse += "Home: " + home + "\n\n";
+//                    jsonResponse += "Mobile: " + mobile + "\n\n";
+
+                } catch (org.json.JSONException e) {
+                    e.printStackTrace();
+                    Toast.makeText(getApplicationContext(),
+                            "Error: " + e.getMessage(),
+                            Toast.LENGTH_LONG).show();
+                }
+              //  hidepDialog();
+            }
+        }, new Response.ErrorListener() {
+
+            @Override
+            public void onErrorResponse(com.android.volley.VolleyError error) {
+                com.android.volley.VolleyLog.d(TAG, "Error: " + error.getMessage());
+                Toast.makeText(getApplicationContext(),
+                        error.getMessage(), Toast.LENGTH_SHORT).show();
+                // hide the progress dialog
+               // hidepDialog();
+            }
+        });
+
+    }
+
+//    private void showpDialog() {
+//        if (!pDialog.isShowing())
+//            pDialog.show();
+//    }
+//
+//    private void hidepDialog() {
+//        if (pDialog.isShowing())
+//            pDialog.dismiss();
+//    }
+
+
 
     /**
      * Manipulates the map once available.
