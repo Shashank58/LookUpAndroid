@@ -14,8 +14,10 @@ import android.view.View;
 import android.widget.EditText;
 import android.widget.Toast;
 
+import com.android.volley.RequestQueue;
 import com.android.volley.Response;
 import com.android.volley.toolbox.JsonObjectRequest;
+import com.android.volley.toolbox.Volley;
 import com.google.android.gms.maps.CameraUpdateFactory;
 import com.google.android.gms.maps.GoogleMap;
 import com.google.android.gms.maps.OnMapReadyCallback;
@@ -26,6 +28,7 @@ import com.google.android.gms.maps.model.LatLng;
 import com.google.android.gms.maps.model.MarkerOptions;
 
 import org.json.JSONArray;
+import org.json.JSONException;
 import org.json.JSONObject;
 
 
@@ -38,6 +41,7 @@ public class MapActivity extends AppCompatActivity implements OnMapReadyCallback
     private static String TAG = MapActivity.class.getSimpleName();
     private String jsonResponse;
     private ProgressDialog pDialog;
+    private String lat, lng;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -79,7 +83,8 @@ public class MapActivity extends AppCompatActivity implements OnMapReadyCallback
             @Override
             public void onMyLocationChange(Location location) {
                 loc = new LatLng(location.getLatitude(), location.getLongitude());
-
+                lat = Double.toString(location.getLatitude());
+                lng = Double.toString(location.getLongitude());
                 map.addMarker(new MarkerOptions().position(loc));
                 map.animateCamera(CameraUpdateFactory.newLatLngZoom(loc, 16.0f));
             }
@@ -95,19 +100,19 @@ public class MapActivity extends AppCompatActivity implements OnMapReadyCallback
         c = map.addCircle(new CircleOptions().center(loc).radius(circleRadius)
                 .fillColor(Color.LTGRAY).strokeColor(Color.BLUE).strokeWidth(5));
         getRequest(circleRadius);
-
     }
 
     public void getRequest(double circleRadius) {
-        String requestUrl = "https://maps.googleapis.com/maps/api/place/nearbysearch/json?location=" + loc.toString() + "&radius=" + circleRadius + "&types=food&name=cruise&key=AIzaSyBK_IGgveKbdNOnjATETCQhnmJfnfRgzQ0";
-       // showpDialog();
+        String newCircleRadius = Double.toString(circleRadius);
+        Log.e("MapActvity","The latitude and longitude are: "+lat+","+lng);
+        String requestUrl = "https://maps.googleapis.com/maps/api/place/nearbysearch/json?location="+lat+","+lng+"&radius="+newCircleRadius+"&types=food&key=AIzaSyBK_IGgveKbdNOnjATETCQhnmJfnfRgzQ0";
+        RequestQueue queue = Volley.newRequestQueue(this);
         JsonObjectRequest jsonObjReq = new JsonObjectRequest(requestUrl, null,
                 new Response.Listener<JSONObject>() {
 
             @Override
             public void onResponse(JSONObject response) {
                 Log.e(TAG, response.toString());
-
                 try {
 
                     JSONArray results = response.getJSONArray("results");
@@ -117,24 +122,13 @@ public class MapActivity extends AppCompatActivity implements OnMapReadyCallback
                         JSONObject location = geometry.getJSONObject("location");
                         double latitude = location.getDouble("lat");
                         double longitude = location.getDouble("lng");
+                        Log.e("MapActivity", "Latitude: "+latitude);
+                        Log.e("MapActivity", "Longitude: "+longitude);
                         LatLng place = new LatLng(latitude, longitude);
                         map.addMarker(new MarkerOptions().position(place));
                     }
-                    // Parsing json object response
-                    // response will be a json object
-//                    String name = response.getString("name");
-//                    String email = response.getString("email");
-//                    JSONObject phone = response.getJSONObject("phone");
-//                    String home = phone.getString("home");
-//                    String mobile = phone.getString("mobile");
-//
-//                    jsonResponse = "";
-//                    jsonResponse += "Name: " + name + "\n\n";
-//                    jsonResponse += "Email: " + email + "\n\n";
-//                    jsonResponse += "Home: " + home + "\n\n";
-//                    jsonResponse += "Mobile: " + mobile + "\n\n";
 
-                } catch (org.json.JSONException e) {
+                } catch (JSONException e) {
                     e.printStackTrace();
                     Toast.makeText(getApplicationContext(),
                             "Error: " + e.getMessage(),
@@ -153,7 +147,7 @@ public class MapActivity extends AppCompatActivity implements OnMapReadyCallback
                // hidepDialog();
             }
         });
-
+        queue.add(jsonObjReq);
     }
 
 //    private void showpDialog() {
