@@ -105,7 +105,7 @@ public class MapActivity extends AppCompatActivity implements OnMapReadyCallback
     public void getRequest(double circleRadius) {
         String newCircleRadius = Double.toString(circleRadius);
         Log.e("MapActvity","The latitude and longitude are: "+lat+","+lng);
-        String requestUrl = "https://maps.googleapis.com/maps/api/place/nearbysearch/json?location="+lat+","+lng+"&radius="+newCircleRadius+"&types=food&key=AIzaSyBK_IGgveKbdNOnjATETCQhnmJfnfRgzQ0";
+        String requestUrl = "https://maps.googleapis.com/maps/api/place/nearbysearch/json?location="+lat+","+lng+"&radius="+newCircleRadius+"&types=food&key=AIzaSyDeZaa4XRHsQ_34jMKFXAQyJKHKfJW_ZEw";
         RequestQueue queue = Volley.newRequestQueue(this);
         JsonObjectRequest jsonObjReq = new JsonObjectRequest(requestUrl, null,
                 new Response.Listener<JSONObject>() {
