@@ -1,8 +1,6 @@
 package com.cybrilla.shashankm.lookup;
 
-import android.app.ProgressDialog;
 import android.content.Intent;
-import android.graphics.Color;
 import android.location.Location;
 import android.os.Bundle;
 import android.support.v4.content.ContextCompat;
@@ -18,12 +16,14 @@ import com.android.volley.RequestQueue;
 import com.android.volley.Response;
 import com.android.volley.toolbox.JsonObjectRequest;
 import com.android.volley.toolbox.Volley;
+import com.google.android.gms.common.api.GoogleApiClient;
+import com.google.android.gms.location.GeofencingRequest;
 import com.google.android.gms.maps.CameraUpdateFactory;
 import com.google.android.gms.maps.GoogleMap;
 import com.google.android.gms.maps.OnMapReadyCallback;
 import com.google.android.gms.maps.SupportMapFragment;
+import com.google.android.gms.maps.model.BitmapDescriptorFactory;
 import com.google.android.gms.maps.model.Circle;
-import com.google.android.gms.maps.model.CircleOptions;
 import com.google.android.gms.maps.model.LatLng;
 import com.google.android.gms.maps.model.MarkerOptions;
 
@@ -37,11 +37,12 @@ public class MapActivity extends AppCompatActivity implements OnMapReadyCallback
     private GoogleMap map;
     private EditText radius;
     private LatLng loc;
-    private Circle c;
+    private Location myLocation;
     private static String TAG = MapActivity.class.getSimpleName();
-    private String jsonResponse;
-    private ProgressDialog pDialog;
     private String lat, lng;
+    private GoogleApiClient mGoogleApiClient;
+    private Circle c;
+    private GeofencingRequest.Builder mGeofenceList;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -51,10 +52,6 @@ public class MapActivity extends AppCompatActivity implements OnMapReadyCallback
         SupportMapFragment mapFragment = (SupportMapFragment) getSupportFragmentManager()
                 .findFragmentById(R.id.map);
         mapFragment.getMapAsync(this);
-        // Getting Google Play availability status
-        pDialog = new ProgressDialog(this);
-        pDialog.setMessage("Please wait...");
-        pDialog.setCancelable(false);
     }
 
     private void replaceMapFragment() {
@@ -74,6 +71,7 @@ public class MapActivity extends AppCompatActivity implements OnMapReadyCallback
             map.setMyLocationEnabled(true);
         }
 
+
         //set "listener" for changing my location
         map.setOnMyLocationChangeListener(myLocationChangeListener());
     }
@@ -85,7 +83,7 @@ public class MapActivity extends AppCompatActivity implements OnMapReadyCallback
                 loc = new LatLng(location.getLatitude(), location.getLongitude());
                 lat = Double.toString(location.getLatitude());
                 lng = Double.toString(location.getLongitude());
-                map.addMarker(new MarkerOptions().position(loc));
+                map.addMarker(new MarkerOptions().position(loc).title("My Location"));
                 map.animateCamera(CameraUpdateFactory.newLatLngZoom(loc, 16.0f));
             }
         };
@@ -96,15 +94,15 @@ public class MapActivity extends AppCompatActivity implements OnMapReadyCallback
             c.remove();
         }
         radius = (EditText) findViewById(R.id.radius);
-        double circleRadius = Double.parseDouble(radius.getText().toString());
-        c = map.addCircle(new CircleOptions().center(loc).radius(circleRadius)
-                .fillColor(Color.LTGRAY).strokeColor(Color.BLUE).strokeWidth(5));
+        float circleRadius = Float.valueOf(radius.getText().toString());
+        c = map.addCircle(new com.google.android.gms.maps.model.CircleOptions().center(loc).radius(circleRadius)
+                .fillColor(android.graphics.Color.LTGRAY));
         getRequest(circleRadius);
+
     }
 
     public void getRequest(double circleRadius) {
         String newCircleRadius = Double.toString(circleRadius);
-        Log.e("MapActvity","The latitude and longitude are: "+lat+","+lng);
         String requestUrl = "https://maps.googleapis.com/maps/api/place/nearbysearch/json?location="+lat+","+lng+"&radius="+newCircleRadius+"&types=food&key=AIzaSyDeZaa4XRHsQ_34jMKFXAQyJKHKfJW_ZEw";
         RequestQueue queue = Volley.newRequestQueue(this);
         JsonObjectRequest jsonObjReq = new JsonObjectRequest(requestUrl, null,
@@ -120,12 +118,12 @@ public class MapActivity extends AppCompatActivity implements OnMapReadyCallback
                         JSONObject result = (JSONObject) results.get(i);
                         JSONObject geometry = result.getJSONObject("geometry");
                         JSONObject location = geometry.getJSONObject("location");
+                        String name = result.getString("name");
                         double latitude = location.getDouble("lat");
                         double longitude = location.getDouble("lng");
-                        Log.e("MapActivity", "Latitude: "+latitude);
-                        Log.e("MapActivity", "Longitude: "+longitude);
                         LatLng place = new LatLng(latitude, longitude);
-                        map.addMarker(new MarkerOptions().position(place));
+                        map.addMarker(new MarkerOptions().position(place).title(name).draggable(false)
+                                .icon(BitmapDescriptorFactory.defaultMarker(BitmapDescriptorFactory.HUE_BLUE)));
                     }
 
                 } catch (JSONException e) {
@@ -134,7 +132,6 @@ public class MapActivity extends AppCompatActivity implements OnMapReadyCallback
                             "Error: " + e.getMessage(),
                             Toast.LENGTH_LONG).show();
                 }
-              //  hidepDialog();
             }
         }, new Response.ErrorListener() {
 
@@ -143,24 +140,10 @@ public class MapActivity extends AppCompatActivity implements OnMapReadyCallback
                 com.android.volley.VolleyLog.d(TAG, "Error: " + error.getMessage());
                 Toast.makeText(getApplicationContext(),
                         error.getMessage(), Toast.LENGTH_SHORT).show();
-                // hide the progress dialog
-               // hidepDialog();
             }
         });
         queue.add(jsonObjReq);
     }
-
-//    private void showpDialog() {
-//        if (!pDialog.isShowing())
-//            pDialog.show();
-//    }
-//
-//    private void hidepDialog() {
-//        if (pDialog.isShowing())
-//            pDialog.dismiss();
-//    }
-
-
 
     /**
      * Manipulates the map once available.
@@ -173,12 +156,6 @@ public class MapActivity extends AppCompatActivity implements OnMapReadyCallback
      */
     @Override
     public void onMapReady(GoogleMap googleMap) {
-//        mMap = googleMap;
-//
-//        // Add a marker in Sydney and move the camera
-//        LatLng sydney = new LatLng(-34, 151);
-//        mMap.addMarker(new MarkerOptions().position(sydney).title("Marker in Sydney"));
-//        mMap.moveCamera(CameraUpdateFactory.newLatLng(sydney));
         replaceMapFragment();
     }
 
