@@ -24,6 +24,7 @@ import com.google.android.gms.maps.OnMapReadyCallback;
 import com.google.android.gms.maps.SupportMapFragment;
 import com.google.android.gms.maps.model.BitmapDescriptorFactory;
 import com.google.android.gms.maps.model.Circle;
+import com.google.android.gms.maps.model.CircleOptions;
 import com.google.android.gms.maps.model.LatLng;
 import com.google.android.gms.maps.model.MarkerOptions;
 
@@ -89,16 +90,18 @@ public class MapActivity extends AppCompatActivity implements OnMapReadyCallback
         };
     }
 
+    //Called when user enters radius
     public void setCircle(View v) {
         if(c != null){
             c.remove();
         }
         radius = (EditText) findViewById(R.id.radius);
-        float circleRadius = Float.valueOf(radius.getText().toString());
-        c = map.addCircle(new com.google.android.gms.maps.model.CircleOptions().center(loc).radius(circleRadius)
-                .fillColor(android.graphics.Color.LTGRAY));
-        getRequest(circleRadius);
-
+        if (!(radius.getText().toString().matches(""))) {
+            float circleRadius = Float.valueOf(radius.getText().toString());
+            c = map.addCircle(new CircleOptions().center(loc).radius(circleRadius)
+                    .fillColor(android.graphics.Color.LTGRAY));
+            getRequest(circleRadius);
+        }
     }
 
     public void getRequest(double circleRadius) {

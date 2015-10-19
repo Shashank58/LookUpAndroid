@@ -5,5 +5,10 @@
     <string name="menu_share">Settings</string>
     <string name="radius">Set Radius</string>
     <string name="button">Set</string>
-    <string name="ApplicationController">ApplicationController</string>
+    <string name="filter_description">Please choose appropriate filters</string>
+    <string name="set_radius">Specify radius in kms</string>
+    <string name="eateries">Eateries</string>
+    <string name="hospitals">Hospitals</string>
+    <string name="liquor">Liquor</string>
+    <string name="educational">Educational Institutes</string>
 </resources>
