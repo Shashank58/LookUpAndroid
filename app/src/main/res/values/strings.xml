@@ -4,7 +4,8 @@
     <string name="title_activity_map">Map</string>
     <string name="menu_share">Settings</string>
     <string name="radius">Set Radius</string>
-    <string name="button">Set</string>
+    <string name="set_button">Filters</string>
+    <string name="apply_button">Apply</string>
     <string name="filter_description">Please choose appropriate filters</string>
     <string name="set_radius">Specify radius in kms</string>
     <string name="eateries">Eateries</string>

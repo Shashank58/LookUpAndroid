@@ -21,7 +21,8 @@
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:layout_marginTop="50dp"
-        android:hint="@string/set_radius"/>
+        android:hint="@string/set_radius"
+        android:id="@+id/radius"/>
 
 
         <CheckBox
@@ -29,36 +30,38 @@
             android:layout_height="wrap_content"
             android:text="@string/eateries"
             android:textSize="20sp"
-            android:layout_marginTop="50dp"/>
+            android:layout_marginTop="50dp"
+            android:id="@+id/checkbox_0"/>
 
         <CheckBox
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:text="@string/educational"
             android:textSize="20sp"
-
-            android:layout_marginTop="20dp"/>
+            android:layout_marginTop="20dp"
+            android:id="@+id/checkbox_1"/>
 
         <CheckBox
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:text="@string/hospitals"
             android:textSize="20sp"
-
-            android:layout_marginTop="20dp"/>
+            android:layout_marginTop="20dp"
+            android:id="@+id/checkbox_2"/>
 
         <CheckBox
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:text="@string/liquor"
             android:textSize="20sp"
-
-            android:layout_marginTop="20dp"/>
+            android:layout_marginTop="20dp"
+            android:id="@+id/checkbox_3"/>
 
         <Button
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:text="Done"
-            android:layout_marginTop="50dp"/>
+            android:layout_marginTop="50dp"
+            android:onClick="setFilter"/>
 
 </LinearLayout>

@@ -10,29 +10,22 @@
         android:layout_height="wrap_content"
         android:orientation="horizontal">
 
-        <TextView
+        <Button
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:text="@string/radius"
-            android:textSize="24sp"
-            android:textStyle="bold"
+            android:text="@string/apply_button"
             android:layout_marginTop="25dp"
-            android:layout_marginLeft="20dp"/>
-
-        <EditText
-            android:layout_width="100dp"
-            android:layout_height="wrap_content"
-            android:layout_marginTop="25dp"
-            android:id="@+id/radius"
-            android:layout_marginLeft="10dp"/>
+            android:onClick="setCircle"
+            android:layout_marginLeft="50dp"/>
 
         <Button
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:text="@string/button"
             android:layout_marginTop="25dp"
-            android:onClick="setCircle"
-            android:layout_marginLeft="20dp"/>
+            android:layout_marginLeft="90dp"
+            android:text="@string/set_button"
+            android:onClick="newFilter"/>
+
     </LinearLayout>
     <fragment
           xmlns:map="http://schemas.android.com/apk/res-auto"

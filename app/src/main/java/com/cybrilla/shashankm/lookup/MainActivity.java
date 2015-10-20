@@ -50,7 +50,7 @@ public class MainActivity extends AppCompatActivity {
                                 } else {
                                     String name = me.optString("name");
                                     String id = me.optString("id");
-                                    Intent intent = new Intent(MainActivity.this, MapActivity.class);
+                                    Intent intent = new Intent(MainActivity.this, MapFilterActivity.class);
                                     intent.putExtra("name", name);
                                     intent.putExtra("id", id);
                                     startActivity(intent);

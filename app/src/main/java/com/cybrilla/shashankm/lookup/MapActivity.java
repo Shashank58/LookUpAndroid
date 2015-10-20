@@ -1,6 +1,9 @@
 package com.cybrilla.shashankm.lookup;
 
+import android.Manifest;
 import android.content.Intent;
+import android.content.pm.PackageManager;
+import android.graphics.Color;
 import android.location.Location;
 import android.os.Bundle;
 import android.support.v4.content.ContextCompat;
@@ -9,17 +12,17 @@ import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
-import android.widget.EditText;
 import android.widget.Toast;
 
 import com.android.volley.RequestQueue;
 import com.android.volley.Response;
+import com.android.volley.VolleyError;
+import com.android.volley.VolleyLog;
 import com.android.volley.toolbox.JsonObjectRequest;
 import com.android.volley.toolbox.Volley;
-import com.google.android.gms.common.api.GoogleApiClient;
-import com.google.android.gms.location.GeofencingRequest;
 import com.google.android.gms.maps.CameraUpdateFactory;
 import com.google.android.gms.maps.GoogleMap;
+import com.google.android.gms.maps.GoogleMap.OnMyLocationChangeListener;
 import com.google.android.gms.maps.OnMapReadyCallback;
 import com.google.android.gms.maps.SupportMapFragment;
 import com.google.android.gms.maps.model.BitmapDescriptorFactory;
@@ -35,15 +38,12 @@ import org.json.JSONObject;
 
 public class MapActivity extends AppCompatActivity implements OnMapReadyCallback {
 
+
     private GoogleMap map;
-    private EditText radius;
     private LatLng loc;
-    private Location myLocation;
     private static String TAG = MapActivity.class.getSimpleName();
     private String lat, lng;
-    private GoogleApiClient mGoogleApiClient;
     private Circle c;
-    private GeofencingRequest.Builder mGeofenceList;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -67,26 +67,30 @@ public class MapActivity extends AppCompatActivity implements OnMapReadyCallback
         map.setMapType(GoogleMap.MAP_TYPE_NORMAL);
 
         //enable Current location Button
-        if (ContextCompat.checkSelfPermission(this, android.Manifest.permission.ACCESS_FINE_LOCATION)
-                == android.content.pm.PackageManager.PERMISSION_GRANTED) {
+        if (ContextCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION)
+                == PackageManager.PERMISSION_GRANTED) {
             map.setMyLocationEnabled(true);
         }
 
-
+        loc = null;
         //set "listener" for changing my location
         map.setOnMyLocationChangeListener(myLocationChangeListener());
     }
 
-    private GoogleMap.OnMyLocationChangeListener myLocationChangeListener() {
-        return new GoogleMap.OnMyLocationChangeListener() {
+    private OnMyLocationChangeListener myLocationChangeListener() {
+        return new OnMyLocationChangeListener() {
             @Override
             public void onMyLocationChange(Location location) {
-                loc = new LatLng(location.getLatitude(), location.getLongitude());
-                lat = Double.toString(location.getLatitude());
-                lng = Double.toString(location.getLongitude());
-                map.addMarker(new MarkerOptions().position(loc).title("My Location"));
-                map.animateCamera(CameraUpdateFactory.newLatLngZoom(loc, 16.0f));
+                location.setAccuracy(3);
+                if(loc == null) {
+                    loc = new LatLng(location.getLatitude(), location.getLongitude());
+                    lat = Double.toString(location.getLatitude());
+                    lng = Double.toString(location.getLongitude());
+                    map.addMarker(new MarkerOptions().position(loc).title("My Location"));
+                    map.animateCamera(CameraUpdateFactory.newLatLngZoom(loc, 14.8f));
+                }
             }
+
         };
     }
 
@@ -95,18 +99,24 @@ public class MapActivity extends AppCompatActivity implements OnMapReadyCallback
         if(c != null){
             c.remove();
         }
-        radius = (EditText) findViewById(R.id.radius);
-        if (!(radius.getText().toString().matches(""))) {
-            float circleRadius = Float.valueOf(radius.getText().toString());
-            c = map.addCircle(new CircleOptions().center(loc).radius(circleRadius)
-                    .fillColor(android.graphics.Color.LTGRAY));
-            getRequest(circleRadius);
+        String radius = getIntent().getExtras().getString("radius");
+        if (!(radius.matches(""))) {
+            float circleRadius = Float.parseFloat(radius);
+            c = map.addCircle(new CircleOptions().center(loc).radius(circleRadius*1000)
+                    .fillColor(Color.LTGRAY));
+            getRequest(circleRadius*1000);
         }
     }
 
-    public void getRequest(double circleRadius) {
-        String newCircleRadius = Double.toString(circleRadius);
-        String requestUrl = "https://maps.googleapis.com/maps/api/place/nearbysearch/json?location="+lat+","+lng+"&radius="+newCircleRadius+"&types=food&key=AIzaSyDeZaa4XRHsQ_34jMKFXAQyJKHKfJW_ZEw";
+    public void getRequest(float circleRadius) {
+        String newCircleRadius = Float.toString(circleRadius);
+        String[] typesArray = getIntent().getExtras().getStringArray("checkedBoxes");
+        String types = "";
+        for(int i = 0;i < typesArray.length; i++){
+            if(typesArray[i] != null)
+                types += typesArray[i]+"|";
+        }
+        String requestUrl = "https://maps.googleapis.com/maps/api/place/nearbysearch/json?location="+lat+","+lng+"&radius="+newCircleRadius+"&types="+types+"&key=AIzaSyDeZaa4XRHsQ_34jMKFXAQyJKHKfJW_ZEw";
         RequestQueue queue = Volley.newRequestQueue(this);
         JsonObjectRequest jsonObjReq = new JsonObjectRequest(requestUrl, null,
                 new Response.Listener<JSONObject>() {
@@ -139,8 +149,8 @@ public class MapActivity extends AppCompatActivity implements OnMapReadyCallback
         }, new Response.ErrorListener() {
 
             @Override
-            public void onErrorResponse(com.android.volley.VolleyError error) {
-                com.android.volley.VolleyLog.d(TAG, "Error: " + error.getMessage());
+            public void onErrorResponse(VolleyError error) {
+                VolleyLog.d(TAG, "Error: " + error.getMessage());
                 Toast.makeText(getApplicationContext(),
                         error.getMessage(), Toast.LENGTH_SHORT).show();
             }
@@ -173,7 +183,7 @@ public class MapActivity extends AppCompatActivity implements OnMapReadyCallback
     public boolean onOptionsItemSelected(MenuItem item){
        switch (item.getItemId()){
             case R.id.action_profile:
-                String name = getIntent().getExtras().getString("name");
+                String name = getIntent().getStringExtra("name");
                 String id = getIntent().getStringExtra("id");
                 Intent i = new Intent(this, UserInfoActivity.class);
                 i.putExtra("name", name);
@@ -184,4 +194,8 @@ public class MapActivity extends AppCompatActivity implements OnMapReadyCallback
         return true;
     }
 
+    public void newFilter(View v){
+        map.clear();
+        finish();
+    }
 }
